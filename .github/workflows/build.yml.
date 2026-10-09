@@ -1,0 +1,35 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Generate Flutter scaffold and overlay sources
+        run: |
+          flutter create --org com.example --project-name autoclicker --platforms android app
+          cp src/pubspec.yaml app/pubspec.yaml
+          rm -rf app/lib && cp -r src/lib app/lib
+          M=app/android/app/src/main
+          cp src/AndroidManifest.xml $M/AndroidManifest.xml
+          rm -f $M/kotlin/com/example/autoclicker/MainActivity.kt
+          mkdir -p $M/kotlin/com/example/autoclicker
+          cp src/kotlin/com/example/autoclicker/*.kt $M/kotlin/com/example/autoclicker/
+          mkdir -p $M/res/xml
+          cp src/res/xml/*.xml $M/res/xml/
+          cp src/res/values/strings.xml $M/res/values/strings.xml
+      - name: Build APK
+        run: cd app && flutter pub get && flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: autoclicker-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
