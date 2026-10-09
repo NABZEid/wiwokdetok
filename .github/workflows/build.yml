@@ -1,6 +1,5 @@
 name: Build APK
 on:
-  push:
   workflow_dispatch:
 jobs:
   build:
@@ -27,6 +26,10 @@ jobs:
           mkdir -p $M/res/xml
           cp src/res/xml/*.xml $M/res/xml/
           cp src/res/values/strings.xml $M/res/values/strings.xml
+      - name: Set minSdk 24 (dibutuhkan untuk klik otomatis)
+        run: |
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' app/android/app/build.gradle.kts || true
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' app/android/app/build.gradle || true
       - name: Build APK
         run: cd app && flutter pub get && flutter build apk --release
       - uses: actions/upload-artifact@v4
